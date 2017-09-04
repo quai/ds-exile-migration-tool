@@ -41,7 +41,7 @@ sub parse_class {
 
 		my $class = {
 			name => $class_name,
-			exstends => $base_class,
+			($base_class) ? (exstends => $base_class) : (),
 			sub_class => [],
 			prop => {},
 		};
@@ -51,9 +51,13 @@ CONT_CLASS:
 
 			if (length($str) == 0 || $str =~ s/^};//) {
 				if ($level >= 1) {
+					delete $class->{'sub_class'} if (!scalar(@{$class->{'sub_class'}}));
+					delete $class->{'prop'} if (!scalar(keys %{$class->{'prop'}}));
 					return ($class, $str);
 				}
 				if (length($str) == 0) {
+					delete $class->{'sub_class'} if (!scalar(@{$class->{'sub_class'}}));
+					delete $class->{'prop'} if (!scalar(keys %{$class->{'prop'}}));
 					return $class;
 				}
 			}
@@ -160,8 +164,8 @@ sub remove_whitespace {
 		if ($char eq '"') {
 			$inside_string = ($inside_string == 1) ? 0 : 1;
 		} else {
-			if (!$inside_string && $char =~ m/\s/ && $out =~ m/[\{\}:;=]$/) { next; }
-			if (!$inside_string && $char =~ m/\s/ && $data =~ m/^(?:\s|[\{\}:;=])/) { next; }
+			next if (!$inside_string && $char =~ m/\s/ && $out =~ m/[\{\}:;=]$/);
+			next if (!$inside_string && $char =~ m/\s/ && $data =~ m/^(?:\s|[\{\}:;=])/);
 		}
 
 		$out .= $char;
