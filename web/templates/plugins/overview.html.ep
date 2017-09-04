@@ -1,0 +1,22 @@
+% layout 'default';
+% title 'Plugins - Overview';
+
+<div class="row">
+	<div class="col-xs-12">
+		<h3 style="margin-top:0px;">Plugin Overview</h3>
+
+		<div class="row">
+			<div class="col-xs-4">
+				<ul class="list-group">
+					<li class="list-group-item">
+						<span class="badge">134</span>
+						@ExileAwesomeCars
+					</li>
+				</ul>
+			</div>
+			<div class="col-xs-6">
+				<h4>Class list</h4>
+			</div>
+		</div>
+	</div>
+</div>
