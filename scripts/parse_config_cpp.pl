@@ -1,10 +1,13 @@
+#!/usr/bin/env perl
 use strict;
 use warnings;
+use FindBin;
+BEGIN { unshift @INC, "$FindBin::Bin/../local/lib/perl5" }
 use File::Slurp;
 use JSON::XS;
 
 my $filename = $ARGV[0];
-if (!-e $filename) {
+if (!defined $filename || !-e $filename) {
 	print "Usage: $0 <path/to/config.cpp>\n";
 	print "Dumps a JSON file called config.json in the current folder.\n";
 	exit;
