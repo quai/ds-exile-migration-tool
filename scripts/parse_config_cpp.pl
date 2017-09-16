@@ -24,14 +24,25 @@ sub parse_class {
 
 	$level = (defined $level) ? $level : 0;
 
+	my $root = { name => '_root', 'sub_class' => [] };
+
 	if ($level > 10) { die "To deep\n"; }
+
+KEEP_ON_PARSING:
 
 	if ($str =~ s/^class ([a-zA-Z0-9_-]+)([:\{;])/$2/) {
 		my $class_name = $1;
 		my $base_class = '';
 
 		if ($str =~ s/^;//) {
-			return ({ name => $class_name }, $str);
+			# If this is an empty class, and $level is 0 and the string still starts with "class"..
+			# We should keep a array of the classes, as if this is a sub class
+			if ($level == 0) {
+				push @{$root->{'sub_class'}}, { name => $class_name };
+				goto KEEP_ON_PARSING;
+			} else {
+				return ({ name => $class_name }, $str);
+			}
 		}
 
 		if ($str =~ s/^:(.*?)\{/{/) {
@@ -57,6 +68,10 @@ CONT_CLASS:
 					delete $class->{'sub_class'} if (!scalar(@{$class->{'sub_class'}}));
 					delete $class->{'prop'} if (!scalar(keys %{$class->{'prop'}}));
 					return ($class, $str);
+				}
+				if ($level == 0 && length($str) > 0) {
+					push @{$root->{'sub_class'}}, $class;
+					goto KEEP_ON_PARSING;
 				}
 				if (length($str) == 0) {
 					delete $class->{'sub_class'} if (!scalar(@{$class->{'sub_class'}}));
@@ -100,20 +115,20 @@ CONT_CLASS:
 				$prop_type = 'array';
 			}
 
-			if ($str !~ s/=//) {
+			if ($str !~ s/\+?=//) {
 				die "Expected =\n";
 			}
 
 			my $prop_value;
 
 			if ($prop_type eq 'scalar') {
-				if ($str =~ s/^"(.*?)";//) {
+				if ($str =~ s/^\s*"(.*?)";//) {
 					# String
 					$prop_value = $1;
-				} elsif ($str =~ s/^(-?[e0-9.-]+);//) {
+				} elsif ($str =~ s/^\s*(-?[e0-9.-]+);//) {
 					# Number;
 					$prop_value = $1;
-				} elsif ($str =~ s/^(.*?);//) {
+				} elsif ($str =~ s/^\s*(.*?);//) {
 					# Number;
 					$prop_value = $1;
 				} else {
@@ -121,7 +136,7 @@ CONT_CLASS:
 					die "Unknown scalar value type: '$extr'\n";
 				}
 			} elsif ($prop_type eq 'array') {
-				if ($str =~ s/^(\{.*?\});//) {
+				if ($str =~ s/^\s*(\{.*?\});//) {
 					# Skipping parsing of arrays in this version. Will implement this if
 					# and when this is needed by the project.
 
@@ -144,7 +159,7 @@ sub remove_whitespace {
 	my ($data) = @_;
 
 	# Remove C-style comments starting with // to the end of the line.
-	$data =~ s/\s*\/\/.*$//gm;
+	$data =~ s/\s*[^:]\/\/.*$//gm;
 
 	# Remove C-style comments like /* foo */, also over multiple lines.
 	$data =~ s(/\*(?:(?!\*/).)*\*/\n?)()sg;
